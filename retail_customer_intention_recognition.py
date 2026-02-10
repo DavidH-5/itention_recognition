@@ -2,9 +2,9 @@
 
 from abc import ABC, abstractmethod
 from typing import Optional, List, Dict, Any
-
-import sqlite3
 from pydantic import BaseModel, Field
+import sqlite3
+import os
 
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, AIMessage, HumanMessage
@@ -13,10 +13,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph import MessagesState
 from langgraph.checkpoint.sqlite import SqliteSaver
 
-from intention_recognition.intention_recognition_abstract_class import IntentionRecognizer
-
-import sqlite3
-import numpy as np
+from intention_recognition_abstract_class import IntentionRecognizer
 
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
@@ -273,6 +270,9 @@ def domain_router(state: IntentState) -> str:
 # =========================
 # 8. GRAPH + CHECKPOINT
 # =========================
+
+# Ensure the directory exists
+os.makedirs("./db", exist_ok=True)
 
 conn = sqlite3.connect("./db/intent_graph.db", check_same_thread=False)
 checkpointer = SqliteSaver(conn)

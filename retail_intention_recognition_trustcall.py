@@ -6,6 +6,7 @@ import sqlite3
 from pydantic import BaseModel, Field
 from trustcall import create_extractor
 import uuid
+import os
 
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import SystemMessage, AIMessage, HumanMessage
@@ -14,10 +15,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.graph import MessagesState
 from langgraph.checkpoint.sqlite import SqliteSaver
 
-from intention_recognition.intention_recognition_abstract_class import IntentionRecognizer
-
-import sqlite3
-import numpy as np
+from intention_recognition_abstract_class import IntentionRecognizer
 
 from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
@@ -264,6 +262,9 @@ def domain_router(state: IntentState) -> str:
 # GRAPH + CHECKPOINT
 # =========================
 
+# Ensure the directory exists
+os.makedirs("./db", exist_ok=True)
+
 conn = sqlite3.connect("./db/intent_graph.db", check_same_thread=False)
 checkpointer = SqliteSaver(conn)
 
@@ -314,32 +315,6 @@ print("Intent Reasoning:", result["intent_reasoning"])
 print("Intent Reasoning:", result["intent_confidence"])
 
 
-# %%
-
-
-class DomainIntentionRecognizer(IntentionRecognizer):
-
-    DOMAINS = ["COMMERCE", "POST_PURCHASE", "GENERAL_POLICY"]
-
-    def recognize(self, state: IntentState) -> Dict:
-        
-        domain_extractor = create_extractor(
-            llm = llm,
-            tools = [DomainResult],
-            tool_choice = 'DomainResult',
-            enable_inserts = True
-        )
-
-        DOMAINS = ["COMMERCE", "POST_PURCHASE", "GENERAL_POLICY"]
-
-        # Instruction
-        instruction = f"""Extract customer intention domain from the following conversation. The possible domains are: {DOMAINS}."""
-
-        domain = domain_extractor.invoke({
-            "messages": [SystemMessage(content=instruction)] + [HumanMessage(content="I bought a drill and now it won’t start")]
-        })
-
-        return domain
 
 # %%
 # Test cases
